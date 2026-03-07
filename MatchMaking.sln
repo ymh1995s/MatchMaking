@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36908.2 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatchMaking", "MatchMaking\MatchMaking.csproj", "{DD453F0A-9F35-43D4-B5B3-4964C31CAC1B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatchMakingClient", "MatchMakingClient\MatchMakingClient.csproj", "{9B4A4F08-C05E-42DC-A68F-089FD0FC2FD2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DD453F0A-9F35-43D4-B5B3-4964C31CAC1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD453F0A-9F35-43D4-B5B3-4964C31CAC1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD453F0A-9F35-43D4-B5B3-4964C31CAC1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD453F0A-9F35-43D4-B5B3-4964C31CAC1B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9B4A4F08-C05E-42DC-A68F-089FD0FC2FD2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9B4A4F08-C05E-42DC-A68F-089FD0FC2FD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9B4A4F08-C05E-42DC-A68F-089FD0FC2FD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9B4A4F08-C05E-42DC-A68F-089FD0FC2FD2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3D728907-4392-4CD6-90FE-77FB3BB13C0E}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,54 @@
+# Build results
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# JetBrains Rider
+.idea/
+*.DotSettings.user
+
+# ASP.NET Core
+appsettings.Development.json
+
+# Blazor build output
+wwwroot/_framework/
+
+# Node modules (혹시 프론트 빌드 사용할 경우)
+node_modules/
+
+# Docker override
+docker-compose.override.yml
+
+# Environment variables
+.env
+
+# Test results
+TestResults/
+
+# Publish output
+publish/
+
+# Coverage reports
+coverage/
+
+# Generated files
+Generated/
+
+# Important: keep solution and project files
+!*.sln
+!*.csproj
+!*.props
+!*.targets
