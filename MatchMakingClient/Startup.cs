@@ -1,15 +1,11 @@
 using MatchMakingClient.Data;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace MatchMakingClient
 {
@@ -22,16 +18,24 @@ namespace MatchMakingClient
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
-        // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<WeatherForecastService>();
+
+            // appsettings.json의 ApiSettings:BaseUrl 값을 읽어와 API 서버 주소로 설정
+            var baseUrl = Configuration["ApiSettings:BaseUrl"];
+            // TestService 전용 HttpClient를 DI 컨테이너에 등록
+            // AddHttpClient를 쓰면 HttpClient의 생명주기를 프레임워크가 관리해줌 (직접 new 하지 않음)
+            services.AddHttpClient<TestService>(client =>
+            {
+                // 모든 HTTP 요청의 기본 주소를 API 서버 URL로 고정
+                // 이후 TestService에서는 "api/test/ping" 처럼 상대 경로만 사용하면 됨
+                client.BaseAddress = new Uri(baseUrl);
+            });
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())

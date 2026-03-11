@@ -1,0 +1,77 @@
+@page "/test"
+@* TestService와 PingResult가 있는 네임스페이스 참조 *@
+@using MatchMakingClient.Data
+@* DI 컨테이너에서 TestService를 주입받아 사용 *@
+@inject TestService TestService
+
+<h3>Ping 테스트</h3>
+<p>버튼을 누르면 API 서버에 비동기 요청을 보냅니다. (서버에서 2초 지연 후 응답)</p>
+
+@* _isLoading이 true인 동안 버튼 비활성화하여 중복 요청 방지 *@
+<button class="btn btn-primary" @onclick="SendPing" disabled="@_isLoading">
+    @* 요청 중일 때는 스피너, 아닐 때는 버튼 텍스트 표시 *@
+    @if (_isLoading)
+    {
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <span> 요청 중...</span>
+    }
+    else
+    {
+        <span>Ping 보내기</span>
+    }
+</button>
+
+@* 응답이 정상적으로 돌아왔을 때만 성공 메시지 표시 *@
+@if (_result != null)
+{
+    <div class="alert alert-success mt-3">
+        <strong>응답:</strong> @_result.Message<br />
+        <strong>서버 시간(UTC):</strong> @_result.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")
+    </div>
+}
+
+@* HTTP 요청 실패 등 예외 발생 시 오류 메시지 표시 *@
+@if (_errorMessage != null)
+{
+    <div class="alert alert-danger mt-3">
+        <strong>오류:</strong> @_errorMessage
+    </div>
+}
+
+@code {
+    // 요청 진행 중 여부 - true면 스피너 표시 및 버튼 비활성화
+    private bool _isLoading = false;
+
+    // API 서버로부터 받은 응답 데이터 (null이면 화면에 표시 안 함)
+    private PingResult _result = null;
+
+    // 요청 실패 시 표시할 오류 메시지 (null이면 화면에 표시 안 함)
+    private string _errorMessage = null;
+
+    // 버튼 클릭 시 호출되는 비동기 메서드
+    // async/await를 사용해 HTTP 응답을 기다리는 동안 UI가 멈추지 않음
+    private async Task SendPing()
+    {
+        // 요청 시작 - 스피너 표시, 이전 결과/오류 초기화
+        _isLoading = true;
+        _result = null;
+        _errorMessage = null;
+
+        try
+        {
+            // await: PingAsync가 완료될 때까지 비동기로 대기
+            // 이 2초 동안 UI 스레드는 다른 작업(렌더링 등)을 처리할 수 있음
+            _result = await TestService.PingAsync();
+        }
+        catch (Exception ex)
+        {
+            // 네트워크 오류, API 서버 미실행 등 예외 처리
+            _errorMessage = $"요청 실패: {ex.Message}";
+        }
+        finally
+        {
+            // 성공/실패 여부와 관계없이 반드시 로딩 상태 해제
+            _isLoading = false;
+        }
+    }
+}
