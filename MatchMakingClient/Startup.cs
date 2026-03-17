@@ -22,16 +22,15 @@ namespace MatchMakingClient
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            services.AddSingleton<WeatherForecastService>();
 
             // appsettings.json의 ApiSettings:BaseUrl 값을 읽어와 API 서버 주소로 설정
             var baseUrl = Configuration["ApiSettings:BaseUrl"];
-            // TestService 전용 HttpClient를 DI 컨테이너에 등록
+            // PingService 전용 HttpClient를 DI 컨테이너에 등록
             // AddHttpClient를 쓰면 HttpClient의 생명주기를 프레임워크가 관리해줌 (직접 new 하지 않음)
-            services.AddHttpClient<TestService>(client =>
+            services.AddHttpClient<PingService>(client =>
             {
                 // 모든 HTTP 요청의 기본 주소를 API 서버 URL로 고정
-                // 이후 TestService에서는 "api/test/ping" 처럼 상대 경로만 사용하면 됨
+                // 이후 PingService에서는 "api/ping/ping" 처럼 상대 경로만 사용하면 됨
                 client.BaseAddress = new Uri(baseUrl);
             });
         }

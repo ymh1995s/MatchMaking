@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MatchMaking.Controllers
 {
-    // REST API 컨트롤러 - api/test 경로로 들어오는 요청을 처리
+    // REST API 컨트롤러 - api/ping 경로로 들어오는 요청을 처리
     [ApiController]
     [Route("api/[controller]")]
-    public class TestController : ControllerBase
+    public class PingController : ControllerBase
     {
-        // GET api/test/ping
+        // GET api/ping/ping
         // 비동기 처리 연습용 핑 엔드포인트
         [HttpGet("ping")]
         public async Task<IActionResult> Ping()

@@ -1,8 +1,8 @@
-@page "/test"
-@* TestService와 PingResult가 있는 네임스페이스 참조 *@
+@page "/ping"
+@* PingService와 PingResult가 있는 네임스페이스 참조 *@
 @using MatchMakingClient.Data
-@* DI 컨테이너에서 TestService를 주입받아 사용 *@
-@inject TestService TestService
+@* DI 컨테이너에서 PingService를 주입받아 사용 *@
+@inject PingService PingService
 
 <h3>Ping 테스트</h3>
 <p>버튼을 누르면 API 서버에 비동기 요청을 보냅니다. (서버에서 2초 지연 후 응답)</p>
@@ -61,7 +61,7 @@
         {
             // await: PingAsync가 완료될 때까지 비동기로 대기
             // 이 2초 동안 UI 스레드는 다른 작업(렌더링 등)을 처리할 수 있음
-            _result = await TestService.PingAsync();
+            _result = await PingService.PingAsync();
         }
         catch (Exception ex)
         {
