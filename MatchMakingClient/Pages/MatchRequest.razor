@@ -121,6 +121,7 @@
         padding: 12px;
         border-radius: 4px;
         border: 1px solid #d3d8de;
+        white-space: pre-line;
     }
 
     .alert-info {
@@ -178,8 +179,22 @@
             };
 
             var result = await MatchRequestService.JoinMatchAsync(userInfo);
-            responseMessage = "매칭 요청이 완료되었습니다.";
-            responseAlertClass = "alert-success";
+
+            if (result.IsMatched)
+            {
+                var members = string.Join(", ", result.Members.Select(m => m.Id));
+                responseMessage = $"✅ 매칭 성공! 참가자: {members}";
+                if (!string.IsNullOrEmpty(result.Message))
+                    responseMessage += $"\n서버 메시지: {result.Message}";
+                responseAlertClass = "alert-success";
+            }
+            else
+            {
+                responseMessage = $"⏳ 매칭 대기 중... (현재 대기 인원: {result.WaitingCount}명)";
+                if (!string.IsNullOrEmpty(result.Message))
+                    responseMessage += $"\n서버 메시지: {result.Message}";
+                responseAlertClass = "alert-info";
+            }
         }
         catch (HttpRequestException ex)
         {
@@ -211,7 +226,11 @@
         try
         {
             var result = await MatchRequestService.CancelMatchAsync(userId);
-            responseMessage = "매칭 취소가 완료되었습니다.";
+            responseMessage = $"❌ 매칭 취소 완료.";
+            if (result.WaitingCount >= 0)
+                responseMessage += $" (현재 대기 인원: {result.WaitingCount}명)";
+            if (!string.IsNullOrEmpty(result.Message))
+                responseMessage += $"\n서버 메시지: {result.Message}";
             responseAlertClass = "alert-success";
         }
         catch (HttpRequestException ex)
