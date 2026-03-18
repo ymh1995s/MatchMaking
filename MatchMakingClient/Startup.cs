@@ -33,6 +33,12 @@ namespace MatchMakingClient
                 // 이후 PingService에서는 "api/ping/ping" 처럼 상대 경로만 사용하면 됨
                 client.BaseAddress = new Uri(baseUrl);
             });
+
+            // MatchRequestService 전용 HttpClient를 DI 컨테이너에 등록
+            services.AddHttpClient<MatchRequestService>(client =>
+            {
+                client.BaseAddress = new Uri(baseUrl);
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
