@@ -1,6 +1,10 @@
 @page "/matchrequest"
 @using MatchMakingClient.Data
+@using MatchMaking.Models
+@using Microsoft.AspNetCore.SignalR.Client
 @inject MatchRequestService MatchRequestService
+@inject IConfiguration Configuration // IConfiguration 주입: appsettings.json에서 API 서버 URL을 읽어오기 위함 *@
+@implements IAsyncDisposable // 페이지를 떠날 때 SignalR 연결을 정리(Dispose)하기 위함 *@
 
 <h1>매칭 신청</h1>
 
@@ -41,6 +45,26 @@
             {
                 <span>@responseMessage</span>
             }
+        </div>
+    </div>
+
+    @* ▼ 실시간 Push 메시지 표시 영역 *@
+    <div class="realtime-message">
+        <h3>🔔 실시간 알림</h3>
+        <div class="alert @realtimeAlertClass">
+            @if (string.IsNullOrEmpty(realtimeMessage))
+            {
+                <span>대기열 참가 후 실시간 알림이 여기에 표시됩니다.</span>
+            }
+            else
+            {
+                <span>@realtimeMessage</span>
+            }
+        </div>
+        @* ▼ SignalR 연결 상태 표시 *@
+        <div class="connection-status">
+            <span class="status-dot @connectionStatusClass"></span>
+            <span>@connectionStatusText</span>
         </div>
     </div>
 </div>
@@ -141,6 +165,49 @@
         border-color: #f5c6cb;
         color: #721c24;
     }
+
+    .alert-warning {
+        background-color: #fff3cd;
+        border-color: #ffc107;
+        color: #856404;
+    }
+
+    .realtime-message {
+        margin-top: 20px;
+    }
+
+    .realtime-message h3 {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+
+    .connection-status {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .status-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .status-connected {
+        background-color: #28a745;
+    }
+
+    .status-disconnected {
+        background-color: #dc3545;
+    }
+
+    .status-connecting {
+        background-color: #ffc107;
+    }
 </style>
 
 @code {
@@ -149,6 +216,148 @@
     private string responseMessage = "";
     private string responseAlertClass = "alert-info";
     private bool isLoading = false;
+
+    // ▼ 실시간 Push 관련 필드
+    private string realtimeMessage = "";
+    private string realtimeAlertClass = "alert-info";
+    private string connectionStatusText = "연결 안됨";
+    private string connectionStatusClass = "status-disconnected";
+
+    // ▼ SignalR 연결 객체 : HubConnection: 서버의 Hub와 WebSocket 연결을 관리하는 객체
+    private HubConnection? hubConnection;
+
+    private string? currentTierGroup;
+
+    /// <summary>
+    /// SignalR Hub에 연결하고, 서버로부터 Push 메시지를 받을 핸들러를 등록.
+    /// </summary>
+    private async Task StartHubConnection(string tier)
+    {
+        // 이미 연결이 있고 같은 Tier면 재연결 불필요
+        if (hubConnection is not null && currentTierGroup == tier)
+            return;
+        
+        await StopHubConnection(); // 기존 연결이 있으면 정리
+
+        var baseUrl = Configuration["ApiSettings:BaseUrl"];
+
+        // ▼ HubConnectionBuilder: SignalR 연결을 만드는 빌더 패턴
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl($"{baseUrl}/matchmakinghub")   // 서버의 Hub 엔드포인트 URL
+            .WithAutomaticReconnect()                // 연결이 끊기면 자동 재연결 시도
+            .Build();
+
+        // ▼ 서버에서 "WaitingCountUpdated" 메시지를 보내면 이 핸들러가 실행됨
+        // 서버 코드: _hubContext.Clients.Group(tier).SendAsync("WaitingCountUpdated", waitingCount, maxPlayers)
+        // ↕ 대응
+        // 클라이언트 코드: hubConnection.On<int, int>("WaitingCountUpdated", (count, max) => { ... })
+        hubConnection.On<int, int>("WaitingCountUpdated", (waitingCount, maxPlayers) =>
+        {
+            realtimeMessage = $"👥 대기열 업데이트: 현재 {waitingCount}/{maxPlayers}명 대기 중";
+            realtimeAlertClass = "alert-info";
+
+            // ▼ InvokeAsync(StateHasChanged): Blazor에게 "UI를 다시 그려라"고 알림
+            // SignalR 콜백은 Blazor의 UI 스레드가 아닌 다른 스레드에서 실행되므로
+            InvokeAsync(StateHasChanged);
+        });
+
+        // ▼ 서버에서 "MatchComplete" 메시지를 보내면 이 핸들러가 실행됨
+        hubConnection.On<MatchResult>("MatchComplete", async (matchResult) =>
+        {
+            var members = string.Join(", ", matchResult.Members.Select(m => m.Id));
+            realtimeMessage = $"🎉 매칭 성사! 참가자: {members}";
+            realtimeAlertClass = "alert-success";
+
+            // 매칭 완료 시 더 이상 해당 Tier 그룹의 대기 업데이트를 받지 않도록 그룹 탈퇴
+            if (currentTierGroup is not null && hubConnection.State == HubConnectionState.Connected)
+            {
+                try
+                {
+                    await hubConnection.InvokeAsync(nameof(MatchMaking.Hubs.MatchMakingHub.LeaveTierGroup), currentTierGroup);
+                }
+                catch { /* 무시 */ }
+                currentTierGroup = null;
+            }
+
+            InvokeAsync(StateHasChanged);
+        });
+
+        // ▼ 연결 상태 변화 이벤트 핸들러
+        hubConnection.Closed += (error) =>
+        {
+            connectionStatusText = "연결 끊김";
+            connectionStatusClass = "status-disconnected";
+            InvokeAsync(StateHasChanged);
+            return Task.CompletedTask;
+        };
+
+        hubConnection.Reconnecting += (error) =>
+        {
+            connectionStatusText = "재연결 중...";
+            connectionStatusClass = "status-connecting";
+            InvokeAsync(StateHasChanged);
+            return Task.CompletedTask;
+        };
+
+        hubConnection.Reconnected += async (connectionId) =>
+        {
+            connectionStatusText = "연결됨 (실시간)";
+            connectionStatusClass = "status-connected";
+
+            // 재연결 후 다시 그룹에 참가 (연결이 끊기면 그룹 소속도 사라지므로)
+            if (currentTierGroup is not null)
+                await hubConnection.InvokeAsync("JoinTierGroup", currentTierGroup);
+
+            await InvokeAsync(StateHasChanged);
+        };
+
+        try
+        {
+            connectionStatusText = "연결 중...";
+            connectionStatusClass = "status-connecting";
+
+            // ▼ 실제 WebSocket 연결 수립
+            await hubConnection.StartAsync();
+
+            // ▼ 서버 Hub의 JoinTierGroup 메서드를 호출하여 Tier 그룹에 참가
+            // → 서버에서 Groups.AddToGroupAsync(ConnectionId, tier) 가 실행됨
+            await hubConnection.InvokeAsync("JoinTierGroup", tier);
+            currentTierGroup = tier;
+
+            connectionStatusText = "연결됨 (실시간)";
+            connectionStatusClass = "status-connected";
+        }
+        catch (Exception ex)
+        {
+            connectionStatusText = $"연결 실패: {ex.Message}";
+            connectionStatusClass = "status-disconnected";
+        }
+    }
+
+    /// <summary>
+    /// SignalR 연결 해제 및 정리
+    /// </summary>
+    private async Task StopHubConnection()
+    {
+        if (hubConnection is not null)
+        {
+            // 그룹에서 먼저 나감
+            if (currentTierGroup is not null && hubConnection.State == HubConnectionState.Connected)
+            {
+                try
+                {
+                    await hubConnection.InvokeAsync("LeaveTierGroup", currentTierGroup);
+                }
+                catch { /* 연결이 이미 끊긴 경우 무시 */ }
+            }
+
+            await hubConnection.DisposeAsync();
+            hubConnection = null;
+            currentTierGroup = null;
+            connectionStatusText = "연결 안됨";
+            connectionStatusClass = "status-disconnected";
+        }
+    }
 
     private async Task OnMatchRequest()
     {
@@ -170,6 +379,8 @@
 
         try
         {
+            await StartHubConnection(selectedTier);
+
             var userInfo = new UserInfo
             {
                 Id = userId,
@@ -232,6 +443,10 @@
             if (!string.IsNullOrEmpty(result.Message))
                 responseMessage += $"\n서버 메시지: {result.Message}";
             responseAlertClass = "alert-success";
+
+            // ▼ 매칭 취소 시 SignalR 연결도 해제
+            await StopHubConnection();
+            realtimeMessage = "";
         }
         catch (HttpRequestException ex)
         {
@@ -247,5 +462,12 @@
         {
             isLoading = false;
         }
+    }
+
+    // ▼ 페이지를 떠날 때 SignalR 연결 정리
+    // @implements IAsyncDisposable 와 쌍을 이루는 메서드
+    public async ValueTask DisposeAsync()
+    {
+        await StopHubConnection();
     }
 }

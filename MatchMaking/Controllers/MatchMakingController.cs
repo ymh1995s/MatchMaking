@@ -22,6 +22,10 @@ namespace MatchMaking.Controllers
         public async Task<IActionResult> JoinMatch([FromBody] UserInfo userInfo)
         {
             var result = await _matchMakingService.JoinAsync(userInfo);
+
+            if (result.IsDuplicate)
+                return Conflict(result);
+
             return Ok(result);
         }
 
@@ -30,10 +34,10 @@ namespace MatchMaking.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> CancelMatch(string id)
         {
-            var cancelled = await _matchMakingService.CancelAsync(id);
+            var result = await _matchMakingService.CancelAsync(id);
 
-            if (cancelled) return Ok(new { Message = $"{id} 매칭 취소 완료", Cancelled = true });
-            return NotFound(new { Message = $"{id} 대기열에 없음 (이미 매칭됐거나 잘못된 ID)", Cancelled = false });
+            if (result is not null) return Ok(result);
+            return NotFound(new MatchResult { Message = $"{id} 대기열에 없음 (이미 매칭됐거나 잘못된 ID)" });
         }
     }
 }

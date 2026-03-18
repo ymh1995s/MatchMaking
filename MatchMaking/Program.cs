@@ -1,3 +1,4 @@
+using MatchMaking.Hubs;
 using MatchMaking.Models;
 using MatchMaking.Service;
 
@@ -7,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSignalR();
 
 builder.Services.AddSingleton<MatchMakingService>();
 
@@ -24,6 +27,10 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// SignalR Hub 엔드포인트 매핑
+// 클라이언트는 "https://localhost:7132/matchmakinghub" 주소로 WebSocket 연결을 맺음
+app.MapHub<MatchMakingHub>("/matchmakinghub");
 
 // 봇 100명 생성 및 대기열 등록
 // Tier1, Tier10 = 0명 / Tier2~Tier9 = 정규분포(평균=Tier5.5, 표준편차=1.5) 기반 100명 배분

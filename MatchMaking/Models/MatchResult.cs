@@ -3,6 +3,7 @@ namespace MatchMaking.Models
     public class MatchResult
     {
         public bool IsMatched { get; set; } // 자신이 정원의 마지막이면 true(게임 시작), 아니면 false(다른 유저 대기)
+        public bool IsDuplicate { get; set; } // 중복된 경기 결과인지 여부
         public List<UserInfo> Members { get; set; } = new();
         public int WaitingCount { get; set; }
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;

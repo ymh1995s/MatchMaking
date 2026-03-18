@@ -7,6 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- ▼ SignalR 클라이언트 패키지: 서버의 Hub에 WebSocket으로 연결하기 위해 필요 -->
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\MatchMaking\MatchMaking.csproj" />
   </ItemGroup>
 
