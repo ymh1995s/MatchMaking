@@ -1,0 +1,63 @@
+@page "/crash"
+@using MatchMakingClient.Data
+@inject CrashService CrashService
+
+<h3>크래쉬 테스트 (덤프 생성용)</h3>
+<p>버튼을 누르면 API 서버에 크래쉬 요청을 보냅니다. <strong>서버 프로세스가 즉시 종료됩니다.</strong></p>
+
+<div class="alert alert-warning">
+    <strong>⚠ 주의:</strong> 이 버튼을 누르면 서버가 강제 종료되어 덤프 파일이 생성됩니다. 운영 환경에서는 사용하지 마세요.
+</div>
+
+<button class="btn btn-danger" @onclick="SendCrash" disabled="@_isLoading">
+    @if (_isLoading)
+    {
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <span> 요청 중...</span>
+    }
+    else
+    {
+        <span>💥 서버 크래쉬</span>
+    }
+</button>
+
+@if (_resultMessage != null)
+{
+    <div class="alert alert-info mt-3">
+        @_resultMessage
+    </div>
+}
+
+@if (_errorMessage != null)
+{
+    <div class="alert alert-danger mt-3">
+        <strong>오류:</strong> @_errorMessage
+    </div>
+}
+
+@code {
+    private bool _isLoading = false;
+    private string _resultMessage = null;
+    private string _errorMessage = null;
+
+    private async Task SendCrash()
+    {
+        _isLoading = true;
+        _resultMessage = null;
+        _errorMessage = null;
+
+        try
+        {
+            _resultMessage = await CrashService.CrashAsync();
+        }
+        catch (Exception ex)
+        {
+            // 서버가 즉시 종료되면 연결이 끊어져 예외가 발생할 수 있음
+            _errorMessage = $"서버가 크래쉬되었거나 연결이 끊어졌습니다: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

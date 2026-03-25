@@ -39,6 +39,12 @@ namespace MatchMakingClient
             {
                 client.BaseAddress = new Uri(baseUrl);
             });
+
+            // CrashService 전용 HttpClient를 DI 컨테이너에 등록 (덤프 테스트용)
+            services.AddHttpClient<CrashService>(client =>
+            {
+                client.BaseAddress = new Uri(baseUrl);
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
