@@ -2,6 +2,16 @@ using MatchMaking.Hubs;
 using MatchMaking.Models;
 using MatchMaking.Service;
 
+// Mutex를 이용해 서버 인스턴스가 1개만 실행되도록 제한
+const string mutexName = "Global\\MatchMakingApiServer";
+using var mutex = new Mutex(true, mutexName, out bool createdNew);
+
+if (!createdNew)
+{
+    Console.WriteLine("이미 MatchMaking API 서버가 실행 중입니다. 프로세스를 종료합니다.");
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
