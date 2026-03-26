@@ -2,11 +2,17 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
+		stage('Clean') {
+		  steps {
+			deleteDir()   // 현재 워크스페이스 싹 삭제
+		  }
+		}
+	
+		stage('Checkout') {
+		  steps {
+			git url: 'https://github.com/ymh1995s/MatchMaking.git', branch: '*/main'
+		  }
+		}
 
         stage('Build Docker Image') {
             steps {
