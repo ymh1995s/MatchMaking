@@ -20,7 +20,7 @@ namespace MatchMaking.Controllers
             // 응답 메시지와 서버 현재 시각(UTC)을 JSON으로 반환
             return Ok(new
             {
-                Message = "Pong!",
+                Message = "Pong! is New",
                 Timestamp = DateTime.UtcNow
             });
         }
