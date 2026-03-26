@@ -1,18 +1,22 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)   // <-- 핵심: 자동 "Declarative: Checkout SCM" 끔
+    }
+
     stages {
-		stage('Clean') {
-		  steps {
-			deleteDir()   // 현재 워크스페이스 싹 삭제
-		  }
-		}
-	
-		stage('Checkout') {
-		  steps {
-			git url: 'https://github.com/ymh1995s/MatchMaking.git', branch: '*/main'
-		  }
-		}
+        stage('Clean') {
+            steps {
+                deleteDir()
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/ymh1995s/MatchMaking.git'
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
