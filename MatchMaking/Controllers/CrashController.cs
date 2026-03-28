@@ -21,12 +21,22 @@ namespace MatchMaking.Controllers
         {
             _logger.LogCritical("크래쉬 API 호출됨 - 프로세스를 강제 종료합니다.");
 
-            // Environment.FailFast는 즉시 프로세스를 종료하고 덤프를 생성할 수 있도록 함
-            // 일반 예외와 달리 catch 블록이나 finally 블록이 실행되지 않음
-            Environment.FailFast("덤프 테스트용 강제 크래쉬");
+            CrashStep1();
 
             // 실제로 도달하지 않지만 컴파일러를 위해 반환
             return Ok();
+        }
+
+        private void CrashStep1()
+        {
+            CrashStep2();
+        }
+
+        private void CrashStep2()
+        {
+            // Environment.FailFast는 즉시 프로세스를 종료하고 덤프를 생성할 수 있도록 함
+            // 일반 예외와 달리 catch 블록이나 finally 블록이 실행되지 않음
+            Environment.FailFast("덤프 테스트용 강제 크래쉬");
         }
     }
 }
